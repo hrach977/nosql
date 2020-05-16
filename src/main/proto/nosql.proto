@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.capstone.nosql";
+option java_outer_classname = "NosqlProto";
+option objc_class_prefix = "NSL";
+
+package nosql;
+
+
+//maybe send the mode in the header along with all the messages, so that
+//to block inappropriate requests for the current time
+
+
+
+//services
+
+
+
+
+//common
+message MsgHeader {
+int32   messageLength = 1; // total message size, including this
+int32   requestID = 2;     // identifier for this message
+int32   responseTo = 3;    // requestID from the original request
+//   (used in responses from db)
+int32   opCode = 4;        // request type - see table below for details
+}
+
+
+//client request messages
+message Document {
+
+}
+
+message OpUpdate {
+    MsgHeader header = 1;             // standard message header
+    int32     ZERO = 2;               // 0 - reserved for future use
+    string   fullCollectionName = 3; // "dbname.collectionname"
+    int32     flags = 4;              // bit vector. see below
+    Document  selector = 5;           // the query to select the document
+    Document  update = 6;
+}
+
+message OpInsert {
+MsgHeader header = 1;             // standard message header
+int32     flags = 2;              // bit vector - see below
+string   fullCollectionName = 3; // "dbname.collectionname"
+repeated Document documents = 4;          // one or more documents to insert into the collection
+}
+
+
+message OpQuery {
+MsgHeader header = 1;                 // standard message header
+int32     flags = 2;                  // bit vector of query options.  See below for details.
+string   fullCollectionName = 3;    // "dbname.collectionname"
+int32     numberToSkip = 4;           // number of documents to skip
+int32     numberToReturn = 5;         // number of documents to return
+//  in the first OP_REPLY batch
+Document  query = 6;                  // query object.  See below for details.
+Document  returnFieldsSelector = 7; // Optional. Selector indicating the fields
+//  to return.  See below for details.
+}
+
+message OpGetMore {
+MsgHeader header = 1;             // standard message header
+int32     ZERO = 2;               // 0 - reserved for future use
+string   fullCollectionName = 3; // "dbname.collectionname"
+int32     numberToReturn = 4;     // number of documents to return
+int64     cursorID = 5;           // cursorID from the OP_REPLY
+}
+
+message OpDelete {
+MsgHeader header = 1;             // standard message header
+int32     ZERO = 2;               // 0 - reserved for future use
+string   fullCollectionName = 3; // "dbname.collectionname"
+int32     flags = 4;              // bit vector - see below for details.
+Document  selector = 5;           // query object.  See below for details.
+}
+
+message OpKillCursors {
+MsgHeader header = 1;            // standard message header
+int32     ZERO = 2;              // 0 - reserved for future use
+int32     numberOfCursorIDs = 3; // number of cursorIDs in message
+repeated int64    cursorIDs = 4;         // sequence of cursorIDs to close
+}
+
+//DB reponse message
+
+message OpReply {
+    MsgHeader header =1;         // standard message header
+    int32     responseFlags =2;  // bit vector - see details below
+    int64     cursorID = 3;       // cursor id if client needs to do get more's
+    int32     startingFrom = 4;   // where in the cursor this reply is starting
+    int32     numberReturned = 5; // number of documents in the reply
+    repeated Document documents = 6;
+}
